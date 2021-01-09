@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace TicTacToeByMinMax
 {
@@ -6,7 +7,7 @@ namespace TicTacToeByMinMax
     {
         class Move
         {
-            public int row, col;
+            public int row, col, val;
         }
         static char player = 'x', opponent = 'y';
 
@@ -69,8 +70,11 @@ namespace TicTacToeByMinMax
         static int minimax(char[,] board, int depth, bool isMax)
         {
             int score = evaluate(board);
-            if (score == 10 || score == -10)
-                return score;
+            if (score == 10)
+                return score - depth;
+
+            if (score == -10)
+                return score + depth;
 
             if (!isMovesLeft(board))
                 return 0;
@@ -104,7 +108,7 @@ namespace TicTacToeByMinMax
                     {
                         if (board[row, col] == '_')
                         {
-                            board[row, col] = player;
+                            board[row, col] = opponent;
                             best = Math.Min(best, minimax(board, depth + 1, !isMax));
                             board[row, col] = '_';
                         }
@@ -114,18 +118,82 @@ namespace TicTacToeByMinMax
             }
         }
 
-        static int findBestMove(char[,] board)
+        static Move findBestMove(char[,] board)
         {
-            return 2;
+            Move bestMove = new Move();
+            bestMove.val = -1000;
+            bestMove.row = -1;
+            bestMove.col = -1;
+
+            for (int i=0; i<3; i++)
+            {
+                for (int j=0; j<3; j++)
+                {
+                    if (board[i,j] == '_')
+                    {
+                        board[i, j] = player;
+                        int moveVal = minimax(board, 0, false);
+                        board[i, j] = '_';
+
+                        if (moveVal > bestMove.val)
+                        {
+                            bestMove.row = i;
+                            bestMove.col = j;
+                            bestMove.val = moveVal;
+                        }
+                    }
+                }
+            }
+
+            Console.WriteLine($"The value of the best move is: {bestMove.val} ");
+            return bestMove;
+        }
+
+        static void printBoard(char[,] board)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    Console.Write($"{board[i, j]} ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
         }
 
         static void Main(string[] args)
         {
-            char[,] board = {{ 'x', 'o', 'x' },
-                     { 'o', 'o', 'x' },
-                     { '_', '_', '_' }};
+            char[,] board = {{ '_', '_', '_' },
+                             { '_', '_', '_' },
+                             { '_', '_', '_' }};
 
+            int row, col;
+            Move bestMove;
+            Move opponentMove;
 
+            printBoard(board);
+
+            while (isMovesLeft(board))
+            {
+                row = Convert.ToInt32(Console.ReadLine()) - 1;
+                col = Convert.ToInt32(Console.ReadLine()) - 1;
+                board[row, col] = opponent;
+                printBoard(board);
+
+                if (!isMovesLeft(board))
+                    break;
+                
+                Thread.Sleep(800);
+                Console.WriteLine();
+                bestMove = findBestMove(board);
+                board[bestMove.row, bestMove.col] = player;
+                printBoard(board);
+                Thread.Sleep(800);
+
+                if (bestMove.val == 10)
+                    break;
+            }
         }
     }
 }
